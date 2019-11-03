@@ -1,5 +1,22 @@
 package org.nutz.dao.impl;
 
+import org.nutz.dao.*;
+import org.nutz.dao.entity.*;
+import org.nutz.dao.impl.link.*;
+import org.nutz.dao.impl.sql.pojo.*;
+import org.nutz.dao.jdbc.JdbcExpert;
+import org.nutz.dao.jdbc.Jdbcs;
+import org.nutz.dao.pager.Pager;
+import org.nutz.dao.sql.*;
+import org.nutz.dao.util.Daos;
+import org.nutz.dao.util.Pojos;
+import org.nutz.dao.util.cri.SimpleCriteria;
+import org.nutz.dao.util.cri.SqlExpressionGroup;
+import org.nutz.lang.*;
+import org.nutz.trans.Atom;
+import org.nutz.trans.Molecule;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,67 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.sql.DataSource;
-
-import org.nutz.dao.Chain;
-import org.nutz.dao.Cnd;
-import org.nutz.dao.Condition;
-import org.nutz.dao.ConnCallback;
-import org.nutz.dao.Dao;
-import org.nutz.dao.DaoException;
-import org.nutz.dao.FieldFilter;
-import org.nutz.dao.FieldMatcher;
-import org.nutz.dao.SqlManager;
-import org.nutz.dao.Sqls;
-import org.nutz.dao.entity.Entity;
-import org.nutz.dao.entity.EntityMaker;
-import org.nutz.dao.entity.LinkField;
-import org.nutz.dao.entity.LinkVisitor;
-import org.nutz.dao.entity.MappingField;
-import org.nutz.dao.entity.Record;
-import org.nutz.dao.impl.link.DoClearLinkVisitor;
-import org.nutz.dao.impl.link.DoClearRelationByHostFieldLinkVisitor;
-import org.nutz.dao.impl.link.DoClearRelationByLinkedFieldLinkVisitor;
-import org.nutz.dao.impl.link.DoDeleteLinkVisitor;
-import org.nutz.dao.impl.link.DoInsertLinkVisitor;
-import org.nutz.dao.impl.link.DoInsertRelationLinkVisitor;
-import org.nutz.dao.impl.link.DoUpdateLinkVisitor;
-import org.nutz.dao.impl.link.DoUpdateRelationLinkVisitor;
-import org.nutz.dao.impl.sql.pojo.ConditionPItem;
-import org.nutz.dao.impl.sql.pojo.PojoEachEntityCallback;
-import org.nutz.dao.impl.sql.pojo.PojoEachRecordCallback;
-import org.nutz.dao.impl.sql.pojo.PojoFetchEntityByJoinCallback;
-import org.nutz.dao.impl.sql.pojo.PojoFetchEntityCallback;
-import org.nutz.dao.impl.sql.pojo.PojoFetchIntCallback;
-import org.nutz.dao.impl.sql.pojo.PojoFetchObjectCallback;
-import org.nutz.dao.impl.sql.pojo.PojoFetchRecordCallback;
-import org.nutz.dao.impl.sql.pojo.PojoQueryEntityByJoinCallback;
-import org.nutz.dao.impl.sql.pojo.PojoQueryEntityCallback;
-import org.nutz.dao.impl.sql.pojo.PojoQueryRecordCallback;
-import org.nutz.dao.jdbc.JdbcExpert;
-import org.nutz.dao.jdbc.Jdbcs;
-import org.nutz.dao.pager.Pager;
-import org.nutz.dao.sql.Criteria;
-import org.nutz.dao.sql.DaoStatement;
-import org.nutz.dao.sql.GroupBy;
-import org.nutz.dao.sql.PItem;
-import org.nutz.dao.sql.Pojo;
-import org.nutz.dao.sql.PojoCallback;
-import org.nutz.dao.sql.Sql;
-import org.nutz.dao.util.Daos;
-import org.nutz.dao.util.Pojos;
-import org.nutz.dao.util.cri.SimpleCriteria;
-import org.nutz.dao.util.cri.SqlExpressionGroup;
-import org.nutz.lang.ContinueLoop;
-import org.nutz.lang.Each;
-import org.nutz.lang.ExitLoop;
-import org.nutz.lang.Lang;
-import org.nutz.lang.LoopException;
-import org.nutz.lang.Mirror;
-import org.nutz.lang.Strings;
-import org.nutz.trans.Atom;
-import org.nutz.trans.Molecule;
 
 public class NutDao extends DaoSupport implements Dao {
 
@@ -480,15 +436,26 @@ public class NutDao extends DaoSupport implements Dao {
         return re[0];
     }
 
-    public <T> List<T> query(Class<T> classOfT, Condition cnd, Pager pager) {
+    public <T> List<T> query(Class<T> classOfT, Condition cnd, Pager pager, boolean isAuto) {
         Pojo pojo = pojoMaker.makeQuery(holder.getEntity(classOfT))
-                             .append(Pojos.Items.cnd(cnd))
-                             .addParamsBy("*")
-                             .setPager(pager)
-                             .setAfter(_pojo_queryEntity);
+                .append(Pojos.Items.cnd(cnd))
+                .addParamsBy("*")
+                .setPager(pager)
+                .setAfter(_pojo_queryEntity);
         expert.formatQuery(pojo);
         _exec(pojo);
-        return pojo.getList(classOfT);
+        if (isAuto){
+            List<T> list = pojo.getList(classOfT);
+            fetchLinks(list,null,null,true);
+            return list;
+        }else{
+            return pojo.getList(classOfT);
+        }
+
+    }
+
+    public <T> List<T> query(Class<T> classOfT, Condition cnd, Pager pager) {
+        return query(classOfT, cnd, pager,false);
     }
 
     public <T> List<T> query(Class<T> classOfT, Condition cnd) {
@@ -589,14 +556,19 @@ public class NutDao extends DaoSupport implements Dao {
     }
 
     public <T> T fetch(Class<T> classOfT, Condition cnd) {
+        return fetch(classOfT,cnd,false);
+    }
+
+    @Override
+    public <T> T fetch(Class<T> classOfT, Condition cnd, boolean isAuto) {
         Pojo pojo = pojoMaker.makeQuery(holder.getEntity(classOfT))
-                             .append(Pojos.Items.cnd(cnd))
-                             .addParamsBy("*")
-                             .setPager(createPager(1, 1))
-                             .setAfter(_pojo_fetchEntity);
+                .append(Pojos.Items.cnd(cnd))
+                .addParamsBy("*")
+                .setPager(createPager(1, 1))
+                .setAfter(_pojo_fetchEntity);
         expert.formatQuery(pojo);
         _exec(pojo);
-        return pojo.getObject(classOfT);
+        return (T) fetchLinks(pojo.getObject(classOfT),null,null,true);
     }
 
     public Record fetch(String tableName, Condition cnd) {
@@ -637,14 +609,20 @@ public class NutDao extends DaoSupport implements Dao {
     }
 
     public <T> T fetchLinks(final T obj, final String regex, final Condition cnd) {
+        return fetchLinks(obj,regex,cnd,false);
+    }
+
+    @Override
+    public <T> T fetchLinks(final T obj, final  String regex, final Condition cnd, final boolean isDeep) {
         if (null == obj)
             return null;
         Lang.each(obj, false, new Each<Object>() {
             public void invoke(int index, Object ele, int length) {
-                _fetchLinks(ele, regex, true, true, true, cnd);
+                _fetchLinks(ele, regex, true, true, true, cnd,null,isDeep);
             }
         });
         return obj;
+
     }
 
     public int clear(Class<?> classOfT, Condition cnd) {
@@ -955,6 +933,10 @@ public class NutDao extends DaoSupport implements Dao {
     }
 
     private LinkVisitor doFetch(final EntityOperator opt) {
+        return doFetch(opt,false);
+    }
+
+    private LinkVisitor doFetch(final EntityOperator opt, final boolean isDeep) {
         return new LinkVisitor() {
             public void visit(final Object obj, final LinkField lnk) {
                 Pojo pojo = opt.maker().makeQuery(lnk.getLinkedEntity());
@@ -963,11 +945,16 @@ public class NutDao extends DaoSupport implements Dao {
                 pojo.setAfter(lnk.getCallback());
                 _exec(pojo);
                 lnk.setValue(obj, pojo.getObject(Object.class));
+                //TODO 递归
+                if (isDeep)
+                    NutDao.this.fetchLinks(pojo.getObject(Object.class),null,null,true);
             }
         };
     }
-
     private LinkVisitor doLinkQuery(final EntityOperator opt, final Condition _cnd, final Map<String, Condition> cnds) {
+        return doLinkQuery(opt,_cnd,cnds,false);
+    }
+    private LinkVisitor doLinkQuery(final EntityOperator opt, final Condition _cnd, final Map<String, Condition> cnds, boolean isDeep) {
         return new LinkVisitor() {
             public void visit(final Object obj, final LinkField lnk) {
                 Pojo pojo = opt.maker().makeQuery(lnk.getLinkedEntity());
@@ -1000,6 +987,8 @@ public class NutDao extends DaoSupport implements Dao {
                 pojo.setEntity(lnk.getLinkedEntity());
                 _exec(pojo);
                 lnk.setValue(obj, pojo.getResult());
+                if (isDeep)
+                    NutDao.this.fetchLinks(pojo.getObject(Object.class),null,null,true);
             }
         };
     }
@@ -1118,7 +1107,7 @@ public class NutDao extends DaoSupport implements Dao {
 				continue;
 			names.add(mf.getName());
 		}
-    	FieldFilter ff = FieldFilter.create(obj.getClass(), "^("+Strings.join("|", names.toArray())+")$");
+    	FieldFilter ff = FieldFilter.create(obj.getClass(), "^("+ Strings.join("|", names.toArray())+")$");
     	Molecule<T> m = new Molecule<T>() {
     		public void run() {
     			insert(t);
@@ -1305,6 +1294,9 @@ public class NutDao extends DaoSupport implements Dao {
     }
     
     protected Object _fetchLinks(Object t, String regex, boolean visitOne, boolean visitMany, boolean visitManyMany, final Condition cnd, final Map<String, Condition> cnds) {
+       return _fetchLinks(t,regex,visitOne,visitMany,visitManyMany,cnd,cnds,false);
+    }
+    protected Object _fetchLinks(Object t, String regex, boolean visitOne, boolean visitMany, boolean visitManyMany, final Condition cnd, final Map<String, Condition> cnds, boolean isDeep) {
         EntityOperator opt = _optBy(t);
         if (null == opt)
             return t;
@@ -1313,11 +1305,10 @@ public class NutDao extends DaoSupport implements Dao {
         if (visitManyMany)
             opt.entity.visitManyMany(t, regex, doLinkQuery(opt, cnd, cnds));
         if (visitOne)
-            opt.entity.visitOne(t, regex, doFetch(opt));
+            opt.entity.visitOne(t, regex, doFetch(opt,isDeep));
         opt.exec();
         return t;
     }
-    
     public EntityHolder getEntityHolder() {
         return holder;
     }

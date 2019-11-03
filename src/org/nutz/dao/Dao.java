@@ -1,9 +1,5 @@
 package org.nutz.dao;
 
-import java.sql.ResultSet;
-import java.util.List;
-import java.util.Map;
-
 import org.nutz.dao.entity.Entity;
 import org.nutz.dao.entity.Record;
 import org.nutz.dao.impl.EntityHolder;
@@ -13,6 +9,10 @@ import org.nutz.dao.sql.PojoMaker;
 import org.nutz.dao.sql.Sql;
 import org.nutz.lang.Configurable;
 import org.nutz.lang.Each;
+
+import java.sql.ResultSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Nutz.Dao 核心接口。 封装了所有的数据库操作
@@ -37,7 +37,7 @@ public interface Dao extends Configurable {
 
     /**
      * 执行一组 Sql，这些 Sql 将会一起被提交
-     * 
+     *
      * @param sqls
      *            要被执行的 Sql 数组
      */
@@ -52,7 +52,7 @@ public interface Dao extends Configurable {
      * <li>Nutz.Dao 创建维护的东西 Nutz.Dao 来维护其生命周期
      * <li>你创建的东西 （比如 ResultSet） 你来维护其生命周期
      * </ul>
-     * 
+     *
      * @param callback
      */
     void run(ConnCallback callback);
@@ -61,7 +61,7 @@ public interface Dao extends Configurable {
      * 从一个 ResultSet 中获取一个对象。
      * <p>
      * 因为 Dao 接口可以知道一个 POJO 的映射细节，这个函数可以帮你节省一点体力。
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param rs
@@ -85,9 +85,9 @@ public interface Dao extends Configurable {
      * <p>
      * 如果你的字段仅仅声明了 '@Id(auto=true)'，没有声明 '@Next'，则认为你还是想取回插入后最新的 ID 值，因为
      * 自动为你添加类似 @Next(@SQL("SELECT MAX(id) FROM tableName")) 的设置
-     * 
-     * 
-     * 
+     *
+     *
+     *
      * @param obj
      *            要被插入的对象
      *            <p>
@@ -99,9 +99,9 @@ public interface Dao extends Configurable {
      *            <li>Map
      *            </ul>
      *            <b style=color:red>注意：</b> 如果是集合，数组或者 Map，所有的对象必须类型相同，否则可能会出错
-     * 
+     *
      * @return 插入后的对象
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.Id
      * @see org.nutz.dao.entity.annotation.Default
      * @see org.nutz.dao.entity.annotation.Next
@@ -112,7 +112,7 @@ public interface Dao extends Configurable {
      * 将一个对象按FieldFilter过滤后,插入到一个数据源。
      * <p/>
      * <code>dao.insert(pet, FieldFilter.create(Pet.class, FieldMatcher.create(false)));</code>
-     * 
+     *
      * @param obj
      *            要被插入的对象
      * @param filter
@@ -121,12 +121,12 @@ public interface Dao extends Configurable {
      * @see org.nutz.dao.Dao#insert(Object)
      */
     <T> T insert(T obj, FieldFilter filter);
-    
+
     <T> T insert(T obj, String actived);
 
     /**
      * 自由的向一个数据表插入一条数据。数据用名值链描述
-     * 
+     *
      * @param tableName
      *            数据表名
      * @param chain
@@ -137,12 +137,12 @@ public interface Dao extends Configurable {
     /**
      * 与 insert(String tableName, Chain chain) 一样，不过，数据表名，将取自 POJO 的数据表声明，请参看
      * '@Table' 注解的详细说明
-     * 
+     *
      * @param classOfT
      *            实体类型
      * @param chain
      *            数据名值链
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.Table
      */
     void insert(Class<?> classOfT, Chain chain);
@@ -151,7 +151,7 @@ public interface Dao extends Configurable {
      * 快速插入一个对象。 对象的 '@Prev' 以及 '@Next' 在这个函数里不起作用。
      * <p>
      * 即，你必须为其设置好值，它会统一采用 batch 的方法插入
-     * 
+     *
      * @param obj
      *            要被插入的对象
      *            <p>
@@ -163,23 +163,23 @@ public interface Dao extends Configurable {
      *            <li>Map
      *            </ul>
      *            <b style=color:red>注意：</b> 如果是集合，数组或者 Map，所有的对象必须类型相同，否则可能会出错
-     * 
+     *
      */
     <T> T fastInsert(T obj);
-    
+
     <T> T fastInsert(T obj, boolean detectAllColumns);
 
     /**
      * 将对象插入数据库同时，也将符合一个正则表达式的所有关联字段关联的对象统统插入相应的数据库
      * <p>
      * 关于关联字段更多信息，请参看 '@One' | '@Many' | '@ManyMany' 更多的描述
-     * 
+     *
      * @param obj
      *            数据对象
      * @param regex
      *            正则表达式，描述了什么样的关联字段将被关注。如果为 null，则表示全部的关联字段都会被插入
      * @return 数据对象本身
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.One
      * @see org.nutz.dao.entity.annotation.Many
      * @see org.nutz.dao.entity.annotation.ManyMany
@@ -188,13 +188,13 @@ public interface Dao extends Configurable {
 
     /**
      * 根据一个正则表达式，仅将对象所有的关联字段插入到数据库中，并不包括对象本身
-     * 
+     *
      * @param obj
      *            数据对象
      * @param regex
      *            正则表达式，描述了什么样的关联字段将被关注。如果为 null，则表示全部的关联字段都会被插入
      * @return 数据对象本身
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.One
      * @see org.nutz.dao.entity.annotation.Many
      * @see org.nutz.dao.entity.annotation.ManyMany
@@ -203,14 +203,14 @@ public interface Dao extends Configurable {
 
     /**
      * 将对象的一个或者多个，多对多的关联信息，插入数据表
-     * 
+     *
      * @param obj
      *            对象
      * @param regex
      *            正则表达式，描述了那种多对多关联字段将被执行该操作
-     * 
+     *
      * @return 对象自身
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.ManyMany
      */
     <T> T insertRelation(T obj, String regex);
@@ -224,7 +224,7 @@ public interface Dao extends Configurable {
      * 如果想有选择的更新个别字段，请使用 org.nutz.dao.FieldFilter
      * <p>
      * 如果仅仅想忽略所有的 null 字段，请使用 updateIgnoreNull 方法更新对象
-     * 
+     *
      * @param obj
      *            要被更新的对象
      *            <p>
@@ -236,16 +236,16 @@ public interface Dao extends Configurable {
      *            <li>Map
      *            </ul>
      *            <b style=color:red>注意：</b> 如果是集合，数组或者 Map，所有的对象必须类型相同，否则可能会出错
-     * 
+     *
      * @return 返回实际被更新的记录条数，一般的情况下，如果更新成功，返回 1，否则，返回 0
-     * 
+     *
      * @see org.nutz.dao.FieldFilter
      */
     int update(Object obj);
 
     /**
      * 更新对象一部分字段
-     * 
+     *
      * @param obj
      *            对象
      * @param actived
@@ -256,7 +256,7 @@ public interface Dao extends Configurable {
 
     /**
      * 更新对象一部分字段
-     * 
+     *
      * @param obj
      *            对象
      * @param actived
@@ -275,7 +275,7 @@ public interface Dao extends Configurable {
      * 更新一个对象，并且忽略所有 null 字段。
      * <p>
      * 注意: 基本数据类型都是不可能为null的,这些字段肯定会更新
-     * 
+     *
      * @param obj
      *            要被更新的对象
      *            <p>
@@ -287,21 +287,21 @@ public interface Dao extends Configurable {
      *            <li>Map
      *            </ul>
      *            <b style=color:red>注意：</b> 如果是集合，数组或者 Map，所有的对象必须类型相同，否则可能会出错
-     * 
+     *
      * @return 返回实际被更新的记录条数，一般的情况下，如果是单一Pojo,更新成功，返回 1，否则，返回 0
      */
     int updateIgnoreNull(Object obj);
 
     /**
      * 自由的更新多条数据
-     * 
+     *
      * @param tableName
      *            数据表名
      * @param chain
      *            数据名值链。
      * @param cnd
      *            WHERE 条件
-     * 
+     *
      * @return 有多少条记录被更新了
      */
     int update(String tableName, Chain chain, Condition cnd);
@@ -309,16 +309,16 @@ public interface Dao extends Configurable {
     /**
      * 与 update(String tableName, Chain chain, Condition cnd) 一样，不过，数据表名，将取自
      * POJO 的数据表声明，请参看 '@Table' 注解的详细说明
-     * 
+     *
      * @param classOfT
      *            实体类型
      * @param chain
      *            数据名值链
      * @param cnd
      *            WHERE 条件
-     * 
+     *
      * @return 有多少条记录被更新了
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.Table
      */
     int update(Class<?> classOfT, Chain chain, Condition cnd);
@@ -327,13 +327,13 @@ public interface Dao extends Configurable {
      * 将对象更新的同时，也将符合一个正则表达式的所有关联字段关联的对象统统更新
      * <p>
      * 关于关联字段更多信息，请参看 '@One' | '@Many' | '@ManyMany' 更多的描述
-     * 
+     *
      * @param obj
      *            数据对象
      * @param regex
      *            正则表达式，描述了什么样的关联字段将被关注。如果为 null，则表示全部的关联字段都会被更新
      * @return 数据对象本身
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.One
      * @see org.nutz.dao.entity.annotation.Many
      * @see org.nutz.dao.entity.annotation.ManyMany
@@ -342,13 +342,13 @@ public interface Dao extends Configurable {
 
     /**
      * 根据一个正则表达式，仅更新对象所有的关联字段，并不包括对象本身
-     * 
+     *
      * @param obj
      *            数据对象
      * @param regex
      *            正则表达式，描述了什么样的关联字段将被关注。如果为 null，则表示全部的关联字段都会被更新
      * @return 数据对象本身
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.One
      * @see org.nutz.dao.entity.annotation.Many
      * @see org.nutz.dao.entity.annotation.ManyMany
@@ -361,7 +361,7 @@ public interface Dao extends Configurable {
      * 而这个中间表可能还有其他的字段，比如描述关联的权重等
      * <p>
      * 这个操作可以让你一次更新某一个对象中多个多对多关联的数据
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param regex
@@ -370,9 +370,9 @@ public interface Dao extends Configurable {
      *            针对中间关联表的名值链。
      * @param cnd
      *            针对中间关联表的 WHERE 条件
-     * 
+     *
      * @return 共有多少条数据被更新
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.ManyMany
      */
     int updateRelation(Class<?> classOfT, String regex, Chain chain, Condition cnd);
@@ -383,7 +383,7 @@ public interface Dao extends Configurable {
 
     /**
      * 查询一组对象。你可以为这次查询设定条件，并且只获取一部分对象（翻页）
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param cnd
@@ -394,9 +394,10 @@ public interface Dao extends Configurable {
      */
     <T> List<T> query(Class<T> classOfT, Condition cnd, Pager pager);
 
+    <T> List<T> query(Class<T> classOfT, Condition cnd, Pager pager, boolean isAuto);
     /**
      * 查询一组对象。你可以为这次查询设定条件
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param cnd
@@ -408,7 +409,7 @@ public interface Dao extends Configurable {
 
     /**
      * 查询出一组记录。
-     * 
+     *
      * @param tableName
      *            表名 - 格式为 <b>tableName[:idName]</b> 比如 ： <b>t_pet</b> 或者
      *            <b>t_pet:id</b> 尤其在 SqlServer2005 的环境下，需要用 t_pet:id 的形式来指明 ID
@@ -419,14 +420,14 @@ public interface Dao extends Configurable {
      * @param pager
      *            翻页信息
      * @return Record 对象。实际上是一个 Map 的包裹类
-     * 
+     *
      * @see org.nutz.dao.Condition
      */
     List<Record> query(String tableName, Condition cnd, Pager pager);
 
     /**
      * 查询出一组记录。
-     * 
+     *
      * @param tableName
      *            表名 - 格式为 <b>tableName[:idName]</b> 比如 ： <b>t_pet</b> 或者
      *            <b>t_pet:id</b> 尤其在 SqlServer2005 的环境下，需要用 t_pet:id 的形式来指明 ID
@@ -444,7 +445,7 @@ public interface Dao extends Configurable {
 
     /**
      * 查询出一组记录。
-     * 
+     *
      * @param tableName
      *            表名 - 格式为 <b>tableName[:idName]</b> 比如 ： <b>t_pet</b> 或者
      *            <b>t_pet:id</b> 尤其在 SqlServer2005 的环境下，需要用 t_pet:id 的形式来指明 ID
@@ -453,14 +454,14 @@ public interface Dao extends Configurable {
      *            条件 - <b style=color:red>请注意：</b> 你传入的 Criteria 实现必须考虑到 没有
      *            'Entity<?>' 传入。即 toSql 函数的参数永远为 null。
      * @return Record 对象。实际上是一个 Map 的包裹类
-     * 
+     *
      * @see org.nutz.dao.Condition
      */
     List<Record> query(String tableName, Condition cnd);
 
     /**
      * 对一组对象进行迭代，这个接口函数非常适用于很大的数据量的集合，因为你不可能把他们都读到内存里
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param cnd
@@ -475,7 +476,7 @@ public interface Dao extends Configurable {
 
     /**
      * 对一组对象进行迭代，这个接口函数非常适用于很大的数据量的集合，因为你不可能把他们都读到内存里
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param cnd
@@ -488,7 +489,7 @@ public interface Dao extends Configurable {
 
     /**
      * 对一组对象进行迭代，这个接口函数非常适用于很大的数据量的集合，因为你不可能把他们都读到内存里
-     * 
+     *
      * @param tableName
      *            表名 - 格式为 <b>tableName[:idName]</b> 比如 ： <b>t_pet</b> 或者
      *            <b>t_pet:id</b> 尤其在 SqlServer2005 的环境下，需要用 t_pet:id 的形式来指明 ID
@@ -505,7 +506,7 @@ public interface Dao extends Configurable {
 
     /**
      * 对一组对象进行迭代，这个接口函数非常适用于很大的数据量的集合，因为你不可能把他们都读到内存里
-     * 
+     *
      * @param tableName
      *            表名 - 格式为 <b>tableName[:idName]</b> 比如 ： <b>t_pet</b> 或者
      *            <b>t_pet:id</b> 尤其在 SqlServer2005 的环境下，需要用 t_pet:id 的形式来指明 ID
@@ -520,7 +521,7 @@ public interface Dao extends Configurable {
 
     /**
      * 对一组对象进行迭代，这个接口函数非常适用于很大的数据量的集合，因为你不可能把他们都读到内存里
-     * 
+     *
      * @param tableName
      *            表名 - 格式为 <b>tableName[:idName]</b> 比如 ： <b>t_pet</b> 或者
      *            <b>t_pet:id</b> 尤其在 SqlServer2005 的环境下，需要用 t_pet:id 的形式来指明 ID
@@ -541,16 +542,16 @@ public interface Dao extends Configurable {
      * 你的对象必须在某个字段声明了注解 '@Id'，否则本操作会抛出一个运行时异常
      * <p>
      * 如果你设定了外键约束，没有正确的清除关联对象会导致这个操作失败
-     * 
-     * 
+     *
+     *
      * @param classOfT
      *            对象类型
      * @param id
      *            对象 ID
-     * 
+     *
      * @return 影响的行数
      * @see org.nutz.dao.entity.annotation.Id
-     * 
+     *
      */
     int delete(Class<?> classOfT, long id);
 
@@ -560,12 +561,12 @@ public interface Dao extends Configurable {
      * 你的对象必须在某个字段声明了注解 '@Name'，否则本操作会抛出一个运行时异常
      * <p>
      * 如果你设定了外键约束，没有正确的清除关联对象会导致这个操作失败
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param name
      *            对象 Name
-     * 
+     *
      * @return 影响的行数
      * @see org.nutz.dao.entity.annotation.Name
      */
@@ -573,7 +574,7 @@ public interface Dao extends Configurable {
 
     /**
      * 根据复合主键，删除一个对象。该对象必须声明 '@PK'，并且，给定的参数顺序 必须同 '@PK' 中声明的顺序一致，否则会产生不可预知的错误。
-     * 
+     *
      * @param classOfT
      * @param pks
      *            复合主键需要的参数，必须同 '@PK'中声明的顺序一致
@@ -587,7 +588,7 @@ public interface Dao extends Configurable {
      * 如果声明了 '@Name'，则相当于 delete(Class<T>,String)<br>
      * 如果声明了 '@PK'，则 deletex(Class<T>,Object ...)<br>
      * 如果没声明任何上面三个注解，则会抛出一个运行时异常
-     * 
+     *
      * @param obj
      *            要被删除的对象
      */
@@ -601,14 +602,14 @@ public interface Dao extends Configurable {
      * Java 对象的字段会被保留，这里的删除，将只会删除数据库中的记录
      * <p>
      * 关于关联字段更多信息，请参看 '@One' | '@Many' | '@ManyMany' 更多的描述
-     * 
+     *
      * @param obj
      *            数据对象
      * @param regex
      *            正则表达式，描述了什么样的关联字段将被关注。如果为 null，则表示全部的关联字段都会被删除
-     * 
+     *
      * @return 被影响的记录行数
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.One
      * @see org.nutz.dao.entity.annotation.Many
      * @see org.nutz.dao.entity.annotation.ManyMany
@@ -623,14 +624,14 @@ public interface Dao extends Configurable {
      * Java 对象的字段会被保留，这里的删除，将只会删除数据库中的记录
      * <p>
      * 关于关联字段更多信息，请参看 '@One' | '@Many' | '@ManyMany' 更多的描述
-     * 
+     *
      * @param obj
      *            数据对象
      * @param regex
      *            正则表达式，描述了什么样的关联字段将被关注。如果为 null，则表示全部的关联字段都会被删除
-     * 
+     *
      * @return 被影响的记录行数
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.One
      * @see org.nutz.dao.entity.annotation.Many
      * @see org.nutz.dao.entity.annotation.ManyMany
@@ -641,12 +642,12 @@ public interface Dao extends Configurable {
      * 根据对象 ID 获取一个对象。它只会获取这个对象，关联对象不会被获取。
      * <p>
      * 你的对象必须在某个字段声明了注解 '@Id'，否则本操作会抛出一个运行时异常
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param id
      *            对象 ID
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.Id
      */
     <T> T fetch(Class<T> classOfT, long id);
@@ -655,20 +656,20 @@ public interface Dao extends Configurable {
      * 根据对象 Name 获取一个对象。它只会获取这个对象，关联对象不会被获取。
      * <p>
      * 你的对象必须在某个字段声明了注解 '@Name'，否则本操作会抛出一个运行时异常
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param name
      *            对象 Name
      * @return 对象本身
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.Name
      */
     <T> T fetch(Class<T> classOfT, String name);
 
     /**
      * 根据复合主键，获取一个对象。该对象必须声明 '@PK'，并且，给定的参数顺序 必须同 '@PK' 中声明的顺序一致，否则会产生不可预知的错误。
-     * 
+     *
      * @param classOfT
      * @param pks
      *            复合主键需要的参数，必须同 '@PK'中声明的顺序一致
@@ -677,21 +678,33 @@ public interface Dao extends Configurable {
 
     /**
      * 根据 WHERE 条件获取一个对象。如果有多个对象符合条件，将只获取 ResultSet 第一个记录
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @param cnd
      *            WHERE 条件
      * @return 对象本身
-     * 
+     *
      * @see org.nutz.dao.Condition
      * @see org.nutz.dao.entity.annotation.Name
      */
     <T> T fetch(Class<T> classOfT, Condition cnd);
-
+    /**
+     * 根据 WHERE 条件获取一个对象。如果有多个对象符合条件，将只获取 ResultSet 第一个记录(自动关联)
+     *
+     * @param classOfT
+     *            对象类型
+     * @param cnd
+     *            WHERE 条件
+     * @return 对象本身
+     *
+     * @see org.nutz.dao.Condition
+     * @see org.nutz.dao.entity.annotation.Name
+     */
+    <T> T fetch(Class<T> classOfT, Condition cnd, boolean isAuto);
     /**
      * 根据条件获取一个 Record 对象
-     * 
+     *
      * @param tableName
      *            表名
      * @param cnd
@@ -701,7 +714,7 @@ public interface Dao extends Configurable {
     Record fetch(String tableName, Condition cnd);
 
     /**
-     * 
+     *
      * @param tableName
      *            表名
      * @param cnd
@@ -714,7 +727,7 @@ public interface Dao extends Configurable {
 
     /**
      * 随便获取一个对象。某些时候，你的数据表永远只有一条记录，这个操作就很适合你
-     * 
+     *
      * @param classOfT
      *            对象类型
      * @return 对象本身
@@ -728,23 +741,23 @@ public interface Dao extends Configurable {
      * 如果声明了 '@Name'，则相当于 fetch(Class<T>,String)<br>
      * 如果声明了 '@PK'，则 fetchx(Class<T>,Object ...)<br>
      * 如果没声明任何上面三个注解，则会抛出一个运行时异常
-     * 
+     *
      * @param obj
      *            参考对象
-     * 
+     *
      * @return 对象本身
      */
     <T> T fetch(T obj);
 
     /**
      * 根据一个正则表达式，获取对象所有的关联字段
-     * 
+     *
      * @param obj
      *            数据对象,不可以是Class啊!!!传对象或集合啊!!!
      * @param regex
      *            正则表达式，描述了什么样的关联字段将被关注。如果为 null，则表示全部的关联字段都会被查询
      * @return 更新后的数据对象本身
-     * 
+     *
      * @see org.nutz.dao.entity.annotation.One
      * @see org.nutz.dao.entity.annotation.Many
      * @see org.nutz.dao.entity.annotation.ManyMany
@@ -755,7 +768,7 @@ public interface Dao extends Configurable {
      * 根据一个正则表达式，获取对象所有的关联字段, 并按Condition进行数据过滤排序
      * <p/>
      * <b>严重提醒,当使用Condition进行数据过滤排序时,应当使regex只匹配特定的映射字段</b>
-     * 
+     *
      * @param obj
      *            数据对象,可以是普通对象或集合,但不是类
      * @param regex
@@ -765,6 +778,22 @@ public interface Dao extends Configurable {
      * @return 传入的数据对象
      */
     <T> T fetchLinks(T obj, String regex, Condition cnd);
+    /**
+     * 根据一个正则表达式，获取对象所有的关联字段, 并按Condition进行数据过滤排序
+     * <p/>
+     * <b>严重提醒,当使用Condition进行数据过滤排序时,应当使regex只匹配特定的映射字段</b>
+     *
+     * @param obj
+     *            数据对象,可以是普通对象或集合,但不是类
+     * @param regex
+     *            正则表达式，描述了什么样的关联字段将被关注。如果为 null，则表示全部的关联字段都会被查询
+     * @param cnd
+     *            关联字段的过滤(排序,条件语句,分页等)
+     * @param isDeep
+     *            是否递归查询
+     * @return 传入的数据对象
+     */
+    <T> T fetchLinks(T obj, String regex, Condition cnd, boolean isDeep);
 
     /**
      * 根据一个 WHERE 条件，清除一组对象。只包括对象本身，不包括关联字段
