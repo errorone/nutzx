@@ -2,10 +2,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.nutz</groupId>
-    <artifactId>nutz</artifactId>
+    <artifactId>nutzx</artifactId>
     <packaging>jar</packaging>
-    <name>Nutz</name>
-    <version>1.r.68-SNAPSHOT</version>
+    <name>Nutzx</name>
+    <version>1.r.0</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jetty.version>9.4.15.v20190215</jetty.version>
